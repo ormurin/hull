@@ -1,0 +1,6 @@
+.osp
+.idea
+
+vendor
+
+/config.php
