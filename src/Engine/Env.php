@@ -52,6 +52,7 @@ class Env
         if ( $dir === false ) {
             throw new \ValueError("Cannot get directory real path.");
         }
+        $dir = str_replace('\\', '/', $dir);
         if ( !is_readable($dir) || !is_dir($dir) ) {
             throw new \RuntimeException("Directory '$dir' is not readable or does not exist.");
         }

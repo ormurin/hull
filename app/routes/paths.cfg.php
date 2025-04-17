@@ -6,6 +6,6 @@ return [
         'unit' => 'Core',
         'controller' => 'IndexController',
         'action' => 'index',
-    ]
+    ],
 
 ];

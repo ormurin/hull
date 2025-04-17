@@ -1,19 +1,21 @@
 <?php
 namespace Ormurin\Hull\Tackle;
 
-class StdObject implements \Iterator, \Countable, \ArrayAccess
+class StdObject implements \Iterator, \Countable, \ArrayAccess, \JsonSerializable
 {
-    protected array $data = [];
-    protected bool $is_readonly = false;
     protected string $param_delimiter = '.';
+    protected bool $is_readonly = false;
+    protected array $data = [];
 
-    public function __construct(array $data = [], bool $is_readonly = false, ?string $param_delimiter = null)
+    public function __construct(array|object|null $data = null, bool $is_readonly = false, ?string $param_delimiter = null)
     {
-        $this->data = $data;
-        $this->is_readonly = $is_readonly;
+        if ( $data !== null ) {
+            $this->setData($data);
+        }
         if ( $param_delimiter !== null ) {
             $this->setParamDelimiter($param_delimiter);
         }
+        $this->is_readonly = $is_readonly;
     }
 
     public function getParamDelimiter(): string
@@ -23,15 +25,15 @@ class StdObject implements \Iterator, \Countable, \ArrayAccess
 
     public function setParamDelimiter(string $delimiter): static
     {
-        $this->checkParamDelimiter($delimiter);
+        static::checkParamDelimiter($delimiter);
         $this->param_delimiter = $delimiter;
         return $this;
     }
 
-    protected function checkParamDelimiter(string $delimiter): void
+    public static function checkParamDelimiter(string $delimiter): void
     {
         if ( $delimiter === '' ) {
-            throw new \ValueError('Delimiter cannot be empty.');
+            throw new \ValueError("Delimiter cannot be empty.");
         }
     }
 
@@ -53,9 +55,15 @@ class StdObject implements \Iterator, \Countable, \ArrayAccess
         }
     }
 
-    public function setData(array $data): static
+    public function setData(array|object $data): static
     {
         $this->assertIsNotReadonly();
+        if ( is_object($data) && method_exists($data, 'toArray') ) {
+            $data = $data->toArray();
+        }
+        if ( !is_array($data) ) {
+            throw new \InvalidArgumentException("Data must be an array or an object with toArray() method that returns an array.");
+        }
         $this->data = $data;
         return $this;
     }
@@ -65,9 +73,34 @@ class StdObject implements \Iterator, \Countable, \ArrayAccess
         return $this->data;
     }
 
-    public function toArray(): array
+    public function toArray(bool $recursive = true, bool $recursive_for_static_only = false): array
     {
-        return $this->data;
+        $data = $this->data;
+        if ( $recursive ) {
+            foreach ( $data as $key => $value ) {
+                if ( is_object($value) && method_exists($value, 'toArray') ) {
+                    if ( !$recursive_for_static_only || ($value instanceof static) ) {
+                        $data[$key] = $value->toArray();
+                    }
+                }
+            }
+        }
+        return $data;
+    }
+
+    public function toJson(int $flags = JSON_FORCE_OBJECT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT, int $depth = 512): string
+    {
+        $json = json_encode($this->data, $flags, $depth);
+        if ( $json === false ) {
+            $json = '{}';
+        }
+        return $json;
+    }
+
+    public function reverse(bool $preserve_keys = false): static
+    {
+        $this->data = array_reverse($this->data, $preserve_keys);
+        return $this;
     }
 
     public function __get(string $name): mixed
@@ -191,7 +224,7 @@ class StdObject implements \Iterator, \Countable, \ArrayAccess
     protected function getParamNamesFromKey(string $key, ?string $delimiter = null): array
     {
         $delimiter = $delimiter ?? $this->param_delimiter;
-        $this->checkParamDelimiter($delimiter);
+        static::checkParamDelimiter($delimiter);
         return explode($delimiter, $key);
     }
 
@@ -260,4 +293,11 @@ class StdObject implements \Iterator, \Countable, \ArrayAccess
         return $offset;
     }
 
+    public function jsonSerialize(): array|\stdClass
+    {
+        if ( !$this->data ) {
+            return new \stdClass();
+        }
+        return $this->data;
+    }
 }

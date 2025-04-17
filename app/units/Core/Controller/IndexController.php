@@ -5,8 +5,8 @@ use Ormurin\Hull\Engine\Controller;
 
 class IndexController extends Controller
 {
-    public function index(): void
+    public function index(): string
     {
-        echo "Index";
+        return $this->view->render('~/index/index.phtml');
     }
 }

@@ -1,6 +1,9 @@
 <?php
 namespace Ormurin\Hull\Engine;
 
+use Ormurin\Hull\Typification\TypeFactory;
+use Ormurin\Hull\Typification\ValueCase;
+
 class Request
 {
     protected string $uri = '';
@@ -327,6 +330,52 @@ class Request
     public function isReadonly(): bool
     {
         return $this->is_readonly;
+    }
+
+    public function env(string $name): ?string
+    {
+        return isset($this->env_vars[$name]) && is_string($this->env_vars[$name]) ? $this->env_vars[$name] : null;
+    }
+
+    public function cookie(string $name, ?string $type = 'trimmed_string', mixed $default = ValueCase::Default): mixed
+    {
+        $raw_value = isset($this->cookies_vars[$name]) && is_string($this->cookies_vars[$name]) ? $this->cookies_vars[$name] : null;
+        return TypeFactory::value($raw_value, $type, $default);
+    }
+
+    public function sess(string $name, ?string $type = 'trimmed_string', mixed $default = ValueCase::Default): mixed
+    {
+        $raw_value = $this->session_vars[$name] ?? null;
+        return TypeFactory::value($raw_value, $type, $default);
+    }
+
+    public function take(string $name, ?string $type = 'trimmed_string', mixed $default = ValueCase::Default): mixed
+    {
+        $raw_value = $this->post_vars[$name] ?? ($this->get_vars[$name] ?? ($this->cookies_vars[$name] ?? ($this->request_vars[$name] ?? null)));
+        return TypeFactory::value($raw_value, $type, $default);
+    }
+
+    public function fromGet(string $name, ?string $type = 'trimmed_string', mixed $default = ValueCase::Default): mixed
+    {
+        $raw_value = $this->get_vars[$name] ?? null;
+        return TypeFactory::value($raw_value, $type, $default);
+    }
+
+    public function fromPost(string $name, ?string $type = 'trimmed_string', mixed $default = ValueCase::Default): mixed
+    {
+        $raw_value = $this->post_vars[$name] ?? null;
+        return TypeFactory::value($raw_value, $type, $default);
+    }
+
+    public function fromRequest(string $name, ?string $type = 'trimmed_string', mixed $default = ValueCase::Default): mixed
+    {
+        $raw_value = $this->request_vars[$name] ?? null;
+        return TypeFactory::value($raw_value, $type, $default);
+    }
+
+    public function fileData(string $name): ?array
+    {
+        return isset($this->file_vars[$name]) && is_array($this->file_vars[$name]) ? $this->file_vars[$name] : null;
     }
 
 }

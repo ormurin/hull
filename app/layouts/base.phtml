@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="<?= $this->htmlLang() ?>">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <?php if ( $this->headKeywords() !== null ) { ?>
+  <meta name="keywords" content="<?= $this->headKeywords() ?>" />
+  <?php } ?>
+  <?php if ( $this->headDescription() !== null ) { ?>
+  <meta name="description" content="<?= $this->headDescription() ?>" />
+  <?php } ?>
+  <title><?= $this->headTitle() ?></title>
+  <?php foreach ( $this->headStylesheets() as $stylesheet ) { ?>
+  <link rel="stylesheet" href="<?= $stylesheet ?>" />
+  <?php } ?>
+  <?php foreach ( $this->headScripts() as $src => $params ) { ?>
+  <script src="<?= $src ?>" <?= $params['async'] ? 'async' : '' ?> <?= $params['defer'] ? 'defer' : '' ?>></script>
+  <?php } ?>
+</head>
+<body>
+  <?= $this->content() ?>
+
+  <?php foreach ( $this->bodyScripts() as $src => $params ) { ?>
+  <script src="<?= $src ?>" <?= $params['async'] ? 'async' : '' ?> <?= $params['defer'] ? 'defer' : '' ?>></script>
+  <?php } ?>
+</body>
+</html>
